@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chatbot-ui
+  labels:
+    app: chatbot-ui
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: chatbot-ui
+  template:
+    metadata:
+      labels:
+        app: chatbot-ui
+    spec:
+      containers:
+        - name: chatbot-ui
+          image: haichuthqb/chatbot-ui:v3
+          ports:
+            - containerPort: 80

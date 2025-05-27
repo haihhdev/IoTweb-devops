@@ -1,0 +1,174 @@
+name: Deploy EKS with Argo CD and FE App (GitOps, private repo, show UI & FE links)
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy-all:
+    runs-on: ubuntu-latest
+
+    env:
+      IMAGE_TAG: ${{ github.sha }}
+
+    steps:
+      # 1. Checkout code
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      # 2. SonarCloud Scan (nếu dùng)
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v2
+        with:
+          projectBaseDir: .
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      # 3. Install Trivy (scan security)
+      - name: Install Trivy
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+
+      # 4. Trivy FS scan (quét lỗ hổng dependencies)
+      - name: Trivy FS scan
+        run: trivy fs --scanners vuln --severity CRITICAL,HIGH .
+
+      # 5. Configure AWS credentials
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            us-east-1
+
+      # 6. Set up Terraform
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.5
+
+      # 7. Terraform Init & Apply (dựng EKS)
+      - name: Terraform Init & Apply
+        working-directory: infrastructure
+        run: |
+          terraform init
+          terraform apply -auto-approve
+
+      # 8. Set up kubectl
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      # 9. Update kubeconfig (kết nối tới EKS)
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --name chatbot-cluster \
+            --region us-east-1
+
+      # 10. Deploy Argo CD to EKS
+      - name: Deploy Argo CD to EKS
+        run: |
+          kubectl create namespace argocd || true
+          kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+      # 11. Wait for ArgoCD CRD ready
+      - name: Wait for ArgoCD CRD ready
+        run: |
+          for i in {1..30}; do
+            kubectl get crd applications.argoproj.io && break
+            echo "Waiting for ArgoCD CRDs to be ready..."
+            sleep 10
+          done
+
+      # 12. Patch ArgoCD Server to LoadBalancer
+      - name: Patch ArgoCD Server to LoadBalancer
+        run: |
+          kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
+
+      # 13. Wait and Print ArgoCD UI Link & Admin Password
+      - name: Print ArgoCD UI Link & Admin Password
+        run: |
+          sudo apt-get update && sudo apt-get install -y jq
+          for i in {1..15}; do
+            ADDRESS=$(kubectl get svc argocd-server -n argocd -o json | jq -r '.status.loadBalancer.ingress[0].hostname // .status.loadBalancer.ingress[0].ip')
+            if [ "$ADDRESS" != "null" ] && [ -n "$ADDRESS" ]; then
+              echo "--------------------------------------------"
+              echo "🎉🎉🎉  ARGO CD ĐÃ SẴN SÀNG!  🎉🎉🎉"
+              echo "👉 Truy cập Argo CD UI tại: https://$ADDRESS"
+              echo "👉 User: admin"
+              echo -n "👉 Password (mặc định lần đầu): "
+              kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
+              echo "--------------------------------------------"
+              break
+            fi
+            echo "Đang chờ ArgoCD service cấp IP.... ($i/15)"
+            sleep 10
+          done
+
+      # 14. Add ArgoCD Git credential for private repo
+      - name: Add ArgoCD repo secret for private repo
+        run: |
+          cat <<EOF | kubectl apply -f -
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: github-private-creds
+            namespace: argocd
+            labels:
+              argocd.argoproj.io/secret-type: repository
+          stringData:
+            url: https://github.com/haidonglethqb/my-chatbot-repo.git
+            username: ${{ secrets.GIT_USERNAME }}
+            password: ${{ secrets.GIT_TOKEN }}
+          EOF
+
+      # 15. Build and push Docker image
+      - name: Log in to Docker Hub
+        run: |
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Build and Push Docker image
+        run: |
+          docker build -t haichuthqb/chatbot-ui:${IMAGE_TAG} .
+          docker push haichuthqb/chatbot-ui:${IMAGE_TAG}
+
+      # 16. Trivy Docker image scan
+      - name: Trivy Docker image scan
+        run: trivy image --severity CRITICAL,HIGH haichuthqb/chatbot-ui:${IMAGE_TAG}
+
+      # 17. Update deployment.yaml với tag mới
+      - name: Update deployment image
+        run: |
+          sed -i "s|image: haichuthqb/chatbot-ui:.*|image: haichuthqb/chatbot-ui:${IMAGE_TAG}|" k8s/deployment.yaml
+
+      # 18. Commit & push lại manifest
+      - name: Commit and push updated manifest
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Update image tag to ${{ github.sha }}"
+          file_pattern: k8s/deployment.yaml
+
+      # 19. Apply ArgoCD Application
+      - name: Apply ArgoCD Application
+        run: |
+          kubectl apply -f k8s/argo-application.yaml -n argocd
+
+      # 20. Print Service External IP / DNS của FE app (chatbot-ui-service)
+      - name: Print Service External IP / DNS for FE app
+        run: |
+          sudo apt-get update && sudo apt-get install -y jq
+          for i in {1..15}; do
+            ADDRESS=$(kubectl get svc chatbot-ui-service -o json | jq -r '.status.loadBalancer.ingress[0].hostname // .status.loadBalancer.ingress[0].ip')
+            if [ "$ADDRESS" != "null" ] && [ -n "$ADDRESS" ]; then
+              echo "--------------------------------------------"
+              echo "🎉🎉🎉  ỨNG DỤNG FE CHATBOT ĐÃ SẴN SÀNG!  🎉🎉🎉"
+              echo "👉 Truy cập: http://$ADDRESS"
+              echo "--------------------------------------------"
+              break
+            fi
+            echo "Đang chờ FE chatbot service cấp IP.... ($i/15)"
+            sleep 10
+          done

@@ -1,0 +1,32 @@
+name: Teardown Terraform Backend (Xóa S3 & DynamoDB)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  teardown-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            us-east-1
+
+      - name: Xóa toàn bộ object trong S3 bucket
+        run: |
+          aws s3 rm s3://chatbot-tfstate-927827734038-dev --recursive || true
+
+      - name: Xóa S3 bucket
+        run: |
+          aws s3api delete-bucket --bucket chatbot-tfstate-927827734038-dev --region us-east-1 || true
+
+      - name: Xóa DynamoDB table
+        run: |
+          aws dynamodb delete-table --table-name terraform-locks --region us-east-1 || true
+
+      - name: Kiểm tra đã xóa chưa 
+        run: |
+          aws s3 ls
+          aws dynamodb list-tables --region us-east-1

@@ -1,0 +1,49 @@
+{
+    "nodegroup": {
+        "nodegroupName": "default-20250424203050331000000001",
+        "nodegroupArn": "arn:aws:eks:ap-southeast-2:680918384815:nodegroup/chatbot-cluster/default-20250424203050331000000001/76cb34bf-7bfc-7c09-b819-82ea2af4eb79",
+        "clusterName": "chatbot-cluster",
+        "version": "1.28",
+        "releaseVersion": "1.28.15-20250419",
+        "createdAt": "2025-04-24T13:30:54.116000-07:00",
+        "modifiedAt": "2025-04-24T14:30:48.701000-07:00",
+        "status": "DELETING",
+        "capacityType": "ON_DEMAND",
+        "scalingConfig": {
+            "minSize": 1,
+            "maxSize": 3,
+            "desiredSize": 2
+        },
+        "instanceTypes": [
+            "t3.medium"
+        ],
+        "subnets": [
+            "subnet-0db6a671836f8bad3",
+            "subnet-0b10d1979d92ae238"
+        ],
+        "amiType": "AL2_x86_64",
+        "nodeRole": "arn:aws:iam::680918384815:role/default-eks-node-group-20250424170956855700000001",
+        "labels": {},
+        "resources": {
+            "autoScalingGroups": [
+                {
+                    "name": "eks-default-20250424203050331000000001-76cb34bf-7bfc-7c09-b819-82ea2af4eb79"
+                }
+            ]
+        },
+        "health": {
+            "issues": []
+        },
+        "updateConfig": {
+            "maxUnavailable": 1
+        },
+        "launchTemplate": {
+            "name": "default-2025042417173739100000000e",
+            "version": "1",
+            "id": "lt-046d510391f8259ad"
+        },
+        "tags": {
+            "Name": "default"
+        }
+    }
+}

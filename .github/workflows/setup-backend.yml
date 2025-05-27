@@ -1,0 +1,33 @@
+name: Setup Terraform Backend (chạy 1 lần đầu)
+
+on:
+  workflow_dispatch: 
+
+jobs:
+  setup-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            us-east-1
+
+      - name: Create S3 bucket for Terraform state
+        run: |
+          aws s3api create-bucket --bucket chatbot-tfstate-927827734038-dev --region us-east-1 || true
+
+      - name: Create DynamoDB table for Terraform lock
+        run: |
+          aws dynamodb create-table \
+            --table-name terraform-locks \
+            --attribute-definitions AttributeName=LockID,AttributeType=S \
+            --key-schema AttributeName=LockID,KeyType=HASH \
+            --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 \
+            --region us-east-1 || true
+
+      - name: Kiểm tra đã tạo xong chưa 
+        run: |
+          aws s3 ls
+          aws dynamodb describe-table --table-name terraform-locks --region us-east-1

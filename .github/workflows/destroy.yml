@@ -1,0 +1,73 @@
+name: Destroy EKS Infrastructure
+
+on:
+  workflow_dispatch: # Kích hoạt bằng tay trên GitHub
+
+jobs:
+  destroy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            us-east-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
+
+      # Xóa workload app, service, ingress ở namespace default
+      - name: Remove Kubernetes workloads
+        run: |
+          set -e
+          aws eks update-kubeconfig --name chatbot-cluster --region us-east-1
+          kubectl delete --all deployment --namespace=default || true
+          kubectl delete --all svc --namespace=default || true
+          kubectl delete --all ingress --namespace=default || true
+          kubectl delete --all pods --namespace=default || true
+        continue-on-error: true
+
+      # Xóa namespace ArgoCD (nếu có)
+      - name: Remove ArgoCD namespace
+        run: |
+          aws eks update-kubeconfig --name chatbot-cluster --region us-east-1
+          kubectl delete ns argocd --ignore-not-found=true
+        continue-on-error: true
+
+      # Xóa monitoring (Prometheus & Grafana nếu có)
+      - name: Remove monitoring (Prometheus & Grafana)
+        run: |
+          aws eks update-kubeconfig --name chatbot-cluster --region us-east-1
+          kubectl delete ns monitoring --ignore-not-found=true
+        continue-on-error: true
+
+      # Xóa hết namespace custom (nếu có thể cần, bỏ nếu không muốn)
+      # - name: Remove custom namespaces
+      #   run: |
+      #     aws eks update-kubeconfig --name chatbot-cluster --region us-east-1
+      #     kubectl delete ns <your-namespace> --ignore-not-found=true
+      #   continue-on-error: true
+
+      # Đợi AWS giải phóng tài nguyên K8s
+      - name: Sleep cho AWS giải phóng tài nguyên
+        run: sleep 180
+
+      - name: Terraform Init
+        working-directory: infrastructure
+        run: terraform init
+
+      - name: Terraform Destroy lần 1
+        working-directory: infrastructure
+        run: terraform destroy -auto-approve
+
+      # Optional: Lặp lại destroy lần 2 nếu còn sót resource
+      - name: Sleep lần 2
+        run: sleep 60
+
+      - name: Terraform Destroy lần 2 (cleanup)
+        working-directory: infrastructure
+        run: terraform destroy -auto-approve
