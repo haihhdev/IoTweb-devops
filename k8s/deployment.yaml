@@ -17,7 +17,7 @@ spec:
       containers:
 
         - name: NetHaus
-          image: haichuthqb/chatbot-ui:v3
+          image: haichuthqb/chatbot-ui:3e68d801aa8df5a32a494699acf5cccae4b46598
 
           ports:
             - containerPort: 80
