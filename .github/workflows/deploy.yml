@@ -25,6 +25,21 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
+      # 2.5. Install Snyk CLI
+      - name: Install Snyk CLI
+        run: npm install -g snyk
+
+      # 2.6. Snyk scan source code (dependencies) + monitor lên dashboard
+      - name: Snyk Test (Dependencies)
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: snyk test --all-projects --org=hoanghuynhhai10032004
+
+      - name: Snyk Monitor (Dependencies)
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: snyk monitor --all-projects --org=hoanghuynhhai10032004
+
       # 3. Install Trivy (scan security)
       - name: Install Trivy
         run: |
@@ -139,6 +154,17 @@ jobs:
       - name: Trivy Docker image scan
         run: trivy image --severity CRITICAL,HIGH haichuthqb/chatbot-ui:${IMAGE_TAG}
 
+      # 16.5. Snyk Docker image scan và monitor
+      - name: Snyk Test (Docker Image)
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: snyk container test haichuthqb/chatbot-ui:${IMAGE_TAG} --org=hoanghuynhhai10032004
+
+      - name: Snyk Monitor (Docker Image)
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: snyk container monitor haichuthqb/chatbot-ui:${IMAGE_TAG} --org=hoanghuynhhai10032004
+
       # 17. Update deployment.yaml với tag mới
       - name: Update deployment image
         run: |
@@ -156,7 +182,7 @@ jobs:
         run: |
           kubectl apply -f k8s/argo-application.yaml -n argocd
 
-      # 20. Print Service External IP / DNS của FE app (chatbot-ui-service)
+      # 20. Print Service External IP / DNS của FE app (nethaus-service)
       - name: Print Service External IP / DNS for FE app
         run: |
           sudo apt-get update && sudo apt-get install -y jq
