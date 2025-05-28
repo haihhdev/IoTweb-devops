@@ -59,17 +59,6 @@ jobs:
       - name: Install Snyk CLI
         run: npm install -g snyk
 
-      # 2.6. Snyk scan source code (dependencies) + monitor lên dashboard
-      - name: Snyk Test (Dependencies)
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: snyk test --all-projects --org=hoanghuynhhai10032004 || true
-
-      - name: Snyk Monitor (Dependencies)
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: snyk monitor --all-projects --org=hoanghuynhhai10032004
-
       # 3. Install Trivy (scan security)
       - name: Install Trivy
         run: |
