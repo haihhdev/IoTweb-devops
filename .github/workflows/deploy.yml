@@ -161,14 +161,14 @@ jobs:
         run: |
           sudo apt-get update && sudo apt-get install -y jq
           for i in {1..15}; do
-            ADDRESS=$(kubectl get svc NetHaus-service -o json | jq -r '.status.loadBalancer.ingress[0].hostname // .status.loadBalancer.ingress[0].ip')
+            ADDRESS=$(kubectl get svc nethaus-service -o json | jq -r '.status.loadBalancer.ingress[0].hostname // .status.loadBalancer.ingress[0].ip')
             if [ "$ADDRESS" != "null" ] && [ -n "$ADDRESS" ]; then
               echo "--------------------------------------------"
-              echo "🎉🎉🎉  ỨNG DỤNG FE NETHAUS ĐÃ SẴN SÀNG!  🎉🎉🎉"
+              echo "🎉🎉🎉  ỨNG DỤNG FE nethaus ĐÃ SẴN SÀNG!  🎉🎉🎉"
               echo "👉 Truy cập: http://$ADDRESS"
               echo "--------------------------------------------"
               break
             fi
-            echo "Đang chờ FE NetHaus service cấp IP.... ($i/15)"
+            echo "Đang chờ FE nethaus service cấp IP.... ($i/15)"
             sleep 10
           done
