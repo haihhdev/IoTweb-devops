@@ -16,6 +16,6 @@ spec:
     spec:
       containers:
         - name: chatbot-ui
-          image: haichuthqb/chatbot-ui:v3
+          image: haichuthqb/chatbot-ui:9e6888f8b778de2b3c0da674283dc9314bb32dd4
           ports:
             - containerPort: 80
