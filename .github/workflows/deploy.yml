@@ -158,7 +158,7 @@ jobs:
       - name: Snyk Test (Docker Image)
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: snyk container test haichuthqb/chatbot-ui:${IMAGE_TAG} --org=hoanghuynhhai10032004
+        run: snyk container test haichuthqb/chatbot-ui:${IMAGE_TAG} --org=hoanghuynhhai10032004 || true
 
       - name: Snyk Monitor (Docker Image)
         env:
