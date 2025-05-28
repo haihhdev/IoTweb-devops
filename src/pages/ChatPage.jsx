@@ -8,7 +8,7 @@ function App() {
   const [isTyping, setIsTyping] = useState(false);
   const typingIntervalRef = useRef(null);
   const chatEndRef = useRef(null);
-  const apiKey = process.env.REACT_APP_GROQ_API_KEY;
+  const apiKey = "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";
   const [renegenerating, setRegenerating] = useState(false);
   const [editingConvId, setEditingConvId] = useState(null);
   const [editingConvName, setEditingConvName] = useState("");
@@ -84,7 +84,7 @@ function App() {
     if (match && match[1]) {
       const songName = match[1].trim();
       const query = encodeURIComponent(songName);
-      const YOUTUBE_API_KEY = process.env.REACT_APP_YOUTUBE_API_KEY;
+      const YOUTUBE_API_KEY = "AIzaSyA5MO7-nGyQ2j_BYv6aKvIcRMoDMoOIYk4";
 
       try {
         const ytRes = await fetch(

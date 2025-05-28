@@ -19,7 +19,7 @@ import { getDatabase, ref, onValue, update } from "firebase/database";
 
 function getTimeLabels() {
   const now = new Date();
-  // Làm tròn xuống 30 phút gần nhất
+  // Làm tròn xuống 30 phút gần nh
   now.setMinutes(now.getMinutes() - (now.getMinutes() % 30), 0, 0);
   const labels = [];
   for (let i = 15; i >= 0; i--) {
