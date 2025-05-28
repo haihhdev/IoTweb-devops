@@ -173,7 +173,7 @@ jobs:
       # 17. Build and Push Backend Docker image
       - name: Build and Push Backend Docker image
         run: |
-          cd IoTweb-devops/BE
+          cd BE
           docker build -t haichuthqb/iot-backend:${IMAGE_TAG} .
           docker push haichuthqb/iot-backend:${IMAGE_TAG}
 
