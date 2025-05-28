@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: chatbot-ui-service
+  name: NetHaus-service
 spec:
   type: LoadBalancer
   selector:
-    app: chatbot-ui
+    app: NetHaus
   ports:
     - port: 80
       targetPort: 80

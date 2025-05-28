@@ -1,21 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: chatbot-ui
+  name: NetHaus
   labels:
-    app: chatbot-ui
+    app: NetHaus
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: chatbot-ui
+      app: NetHaus
   template:
     metadata:
       labels:
-        app: chatbot-ui
+        app: NetHaus
     spec:
       containers:
-        - name: chatbot-ui
+        - name: NetHaus
           image: haichuthqb/chatbot-ui:v3
           ports:
             - containerPort: 80
