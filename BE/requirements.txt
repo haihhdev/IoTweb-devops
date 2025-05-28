@@ -31,7 +31,7 @@ feedparser
 # -- Computer Vision: Face/Hand --
 opencv-python
 mediapipe
-
+scikit-learn
 # -- Đề phòng thiếu Keras, có thể cài thêm --
 keras
 
