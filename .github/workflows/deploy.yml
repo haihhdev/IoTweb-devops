@@ -3,7 +3,7 @@ name: Deploy EKS with Argo CD and FE App (GitOps, private repo, show UI & FE lin
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   deploy-all:
