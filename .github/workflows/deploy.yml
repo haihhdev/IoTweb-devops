@@ -179,6 +179,11 @@ jobs:
 
       # 18. Trivy Docker image scan (FE)
       - name: Trivy Docker image scan (FE)
+        run: |
+          docker system prune -af || true
+          sudo rm -rf /tmp/* || true
+
+      - name: Trivy Docker image scan (FE)
         run: trivy image --severity CRITICAL,HIGH haichuthqb/chatbot-ui:${IMAGE_TAG}
 
       # 19. Trivy Docker image scan (BE)
