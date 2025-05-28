@@ -1,12 +1,49 @@
+# -- Web server, REST API --
 Flask
-deepface
-paho-mqtt
-joblib
+
+# -- HTTP Requests --
 requests
+
+# -- AI/Face Recognition --
+deepface>=0.0.79
+
+# -- TensorFlow + shim for DeepFace/RetinaFace --
+tensorflow>=2.10     # Hoặc dùng tensorflow-cpu>=2.10 nếu chỉ chạy CPU
+tf-keras
+
+# -- Scikit-learn & Model IO --
+scikit-learn
+joblib
+
+# -- Data Processing & Utils --
+numpy
+pytz
+dateparser
+sympy
+
+# -- MQTT --
+paho-mqtt
+
+# -- News, Wikipedia --
 wikipedia
 feedparser
-sympy
-dateparser
+
+# -- Computer Vision: Face/Hand --
 opencv-python
-numpy
 mediapipe
+
+# -- Đề phòng thiếu Keras, có thể cài thêm --
+keras
+
+# -- Nếu dùng face detector khác, có thể cần thêm (không bắt buộc) --
+mtcnn
+retina-face
+
+# -- Nếu muốn dùng các chức năng tiếng Việt mở rộng, cài thêm (tuỳ chọn) --
+underthesea   # Xử lý NLP tiếng Việt, không bắt buộc nếu không dùng
+
+# -- Nếu deploy bằng gunicorn --
+# gunicorn
+
+# -- Nếu chạy trên Jupyter hoặc dev, có thể thêm (không bắt buộc) --
+# notebook
