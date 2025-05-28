@@ -18,7 +18,7 @@ spec:
 
 
         - name: nethaus
-          image: haichuthqb/chatbot-ui:b0a49b7f97a5209176ee3a1d556bfb82dd2c8802
+          image: haichuthqb/chatbot-ui:fd6f818510aabfe8f130998a6de8d9fd0aaa8677
 
 
           ports:
