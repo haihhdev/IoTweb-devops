@@ -1,0 +1,12 @@
+Flask
+deepface
+paho-mqtt
+joblib
+requests
+wikipedia
+feedparser
+sympy
+dateparser
+opencv-python
+numpy
+mediapipe

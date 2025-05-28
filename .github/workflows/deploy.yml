@@ -170,49 +170,81 @@ jobs:
             password: ${{ secrets.GIT_TOKEN }}
           EOF
 
-      # 15. Build and push Docker image
+      # 15. Log in to Docker Hub
       - name: Log in to Docker Hub
         run: |
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      - name: Build and Push Docker image
+      # 16. Build and Push FE Docker image
+      - name: Build and Push FE Docker image
         run: |
           docker build -t haichuthqb/chatbot-ui:${IMAGE_TAG} .
           docker push haichuthqb/chatbot-ui:${IMAGE_TAG}
 
-      # 16. Trivy Docker image scan
-      - name: Trivy Docker image scan
+      # 17. Build and Push Backend Docker image
+      - name: Build and Push Backend Docker image
+        run: |
+          cd IoTweb-devops/BE
+          docker build -t haichuthqb/iot-backend:${IMAGE_TAG} .
+          docker push haichuthqb/iot-backend:${IMAGE_TAG}
+
+      # 18. Trivy Docker image scan (FE)
+      - name: Trivy Docker image scan (FE)
         run: trivy image --severity CRITICAL,HIGH haichuthqb/chatbot-ui:${IMAGE_TAG}
 
-      # 16.5. Snyk Docker image scan và monitor
-      - name: Snyk Test (Docker Image)
+      # 19. Trivy Docker image scan (BE)
+      - name: Trivy Docker image scan (BE)
+        run: trivy image --severity CRITICAL,HIGH haichuthqb/iot-backend:${IMAGE_TAG}
+
+      # 20. Snyk Test (Docker Image FE)
+      - name: Snyk Test (Docker Image FE)
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         run: snyk container test haichuthqb/chatbot-ui:${IMAGE_TAG} --org=hoanghuynhhai10032004 || true
 
-      - name: Snyk Monitor (Docker Image)
+      # 21. Snyk Monitor (Docker Image FE)
+      - name: Snyk Monitor (Docker Image FE)
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         run: snyk container monitor haichuthqb/chatbot-ui:${IMAGE_TAG} --org=hoanghuynhhai10032004
 
-      # 17. Update deployment.yaml với tag mới
-      - name: Update deployment image
+      # 22. Snyk Test (Docker Image BE)
+      - name: Snyk Test (Docker Image BE)
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: snyk container test haichuthqb/iot-backend:${IMAGE_TAG} --org=hoanghuynhhai10032004 || true
+
+      # 23. Snyk Monitor (Docker Image BE)
+      - name: Snyk Monitor (Docker Image BE)
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: snyk container monitor haichuthqb/iot-backend:${IMAGE_TAG} --org=hoanghuynhhai10032004
+
+      # 24. Update FE deployment.yaml với tag mới
+      - name: Update FE deployment image
         run: |
           sed -i "s|image: haichuthqb/chatbot-ui:.*|image: haichuthqb/chatbot-ui:${IMAGE_TAG}|" k8s/deployment.yaml
 
-      # 18. Commit & push lại manifest
-      - name: Commit and push updated manifest
+      # 25. Update backend be-deployment.yaml với tag mới
+      - name: Update backend deployment image
+        run: |
+          sed -i "s|image: haichuthqb/iot-backend:.*|image: haichuthqb/iot-backend:${IMAGE_TAG}|" k8s/be-deployment.yaml
+
+      # 26. Commit & push lại manifest FE & BE
+      - name: Commit and push updated manifests
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "Update image tag to ${{ github.sha }}"
-          file_pattern: k8s/deployment.yaml
+          commit_message: "Update image tags to ${{ github.sha }}"
+          file_pattern: |
+            k8s/deployment.yaml
+            k8s/be-deployment.yaml
 
-      # 19. Apply ArgoCD Application
+      # 27. Apply ArgoCD Application
       - name: Apply ArgoCD Application
         run: |
           kubectl apply -f k8s/argo-application.yaml -n argocd
 
-      # 20. Print Service External IP / DNS của FE app (nethaus-service)
+      # 28. Print Service External IP / DNS của FE app (nethaus-service)
       - name: Print Service External IP / DNS for FE app
         run: |
           sudo apt-get update && sudo apt-get install -y jq
@@ -226,5 +258,22 @@ jobs:
               break
             fi
             echo "Đang chờ FE nethaus service cấp IP.... ($i/15)"
+            sleep 10
+          done
+
+      # 29. Print Service External IP / DNS cho backend app
+      - name: Print Service External IP / DNS for Backend app
+        run: |
+          sudo apt-get update && sudo apt-get install -y jq
+          for i in {1..15}; do
+            ADDRESS=$(kubectl get svc iot-backend-service -o json | jq -r '.status.loadBalancer.ingress[0].hostname // .status.loadBalancer.ingress[0].ip')
+            if [ "$ADDRESS" != "null" ] && [ -n "$ADDRESS" ]; then
+              echo "--------------------------------------------"
+              echo "🎉🎉🎉  BACKEND iot-backend ĐÃ SẴN SÀNG!  🎉🎉🎉"
+              echo "👉 Truy cập: http://$ADDRESS:5000"
+              echo "--------------------------------------------"
+              break
+            fi
+            echo "Đang chờ backend iot-backend service cấp IP.... ($i/15)"
             sleep 10
           done

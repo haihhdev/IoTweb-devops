@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: iot-backend
+  labels:
+    app: iot-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: iot-backend
+  template:
+    metadata:
+      labels:
+        app: iot-backend
+    spec:
+      containers:
+      - name: iot-backend
+        image: haichuthqb/iot-backend:${IMAGE_TAG}   # <-- tag động!
+        ports:
+        - containerPort: 5000
+        imagePullPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: iot-backend-service
+spec:
+  selector:
+    app: iot-backend
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
+  type: LoadBalancer
