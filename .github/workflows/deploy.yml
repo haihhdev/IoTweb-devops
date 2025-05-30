@@ -47,7 +47,7 @@ jobs:
       - name: Run Selenium Python UI tests
         run: python selenium/test.py
 
-      # 2. SonarCloud Scan (nếu dùng)
+      # 2. SonarCloud Scan 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
         with:
