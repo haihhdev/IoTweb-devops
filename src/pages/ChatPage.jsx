@@ -8,7 +8,7 @@ function App() {
   const [isTyping, setIsTyping] = useState(false);
   const typingIntervalRef = useRef(null);
   const chatEndRef = useRef(null);
-  const apiKey = "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";
+  const apiKey = "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";
   const [renegenerating, setRegenerating] = useState(false);
   const [editingConvId, setEditingConvId] = useState(null);
   const [editingConvName, setEditingConvName] = useState("");
